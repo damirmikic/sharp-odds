@@ -489,6 +489,26 @@ const OddsDetail = ({ oddsData }) => {
     return null;
   }
 
+  // Format last update time
+  const formatLastUpdate = (timestamp) => {
+    if (!timestamp) return null;
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + 
+           ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const lastUpdateStr = formatLastUpdate(oddsData.lastUpdate);
+
   const getBestOdds = (type, marketKey) => {
     let best = -1;
     oddsData.bookmakers.forEach(bookie => {
@@ -537,6 +557,19 @@ const OddsDetail = ({ oddsData }) => {
         }}>
           {oddsData.bookmakers.length} bookmakers
         </span>
+        {lastUpdateStr && (
+          <span style={{
+            fontSize: 9, padding: '2px 6px', borderRadius: 3,
+            background: 'var(--bg-primary)', color: 'var(--odds-yellow)',
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            {lastUpdateStr}
+          </span>
+        )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           {[
             { key: 'h2h', label: '1X2' },

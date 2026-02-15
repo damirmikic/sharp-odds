@@ -206,18 +206,20 @@ app.get('/api/odds/:sportKey/:eventId', async (req, res) => {
       };
     }
 
-    // Create new response object
+    // Create new response object with last update timestamp
+    const lastUpdate = Date.now();
     const filteredData = {
       ...rawData,
       bookmakers: sharpBookies,
       averageOdds,
       averageTotals,
+      lastUpdate,
     };
 
     // Update Cache
     oddsCache[eventId] = {
       data: filteredData,
-      timestamp: Date.now()
+      timestamp: lastUpdate
     };
 
     res.json(filteredData);
