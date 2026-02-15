@@ -19,6 +19,206 @@ const ChevronIcon = ({ open }) => (
   </svg>
 );
 
+// ─── Betslip Components ──────────────────────────────────────────────────────
+
+const BetslipItem = ({ item, onRemove }) => {
+  return (
+    <div style={{
+      padding: '10px',
+      background: 'var(--bg-row-odd)',
+      borderBottom: '1px solid var(--border-subtle)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-bright)' }}>
+            {item.matchInfo.homeTeam} vs {item.matchInfo.awayTeam}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+            {item.outcomeLabel} • {item.bookmakerTitle}
+          </div>
+        </div>
+        <button
+          onClick={() => onRemove(item.id)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: 16,
+            padding: 0,
+            lineHeight: 1,
+          }}
+        >×</button>
+      </div>
+      <div style={{
+        fontSize: 18,
+        fontFamily: 'JetBrains Mono, Consolas, monospace',
+        fontWeight: 600,
+        color: 'var(--odds-blue)',
+        marginTop: 6,
+      }}>
+        {item.odds.toFixed(3)}
+      </div>
+    </div>
+  );
+};
+
+const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 70,
+      right: 20,
+      width: 360,
+      maxHeight: 500,
+      background: 'var(--bg-secondary)',
+      border: '1px solid var(--border-primary)',
+      borderRadius: 8,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+      display: 'flex',
+      flexDirection: 'column',
+      zIndex: 1000,
+      animation: 'slideUp 0.2s ease-out',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '12px 16px',
+        borderBottom: '1px solid var(--border-primary)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'var(--bg-tertiary)',
+        borderRadius: '8px 8px 0 0',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>📋</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-bright)' }}>
+            My Betslip
+          </span>
+          {betslip.length > 0 && (
+            <span style={{
+              fontSize: 10,
+              padding: '2px 6px',
+              borderRadius: 3,
+              background: 'var(--odds-blue)',
+              color: '#fff',
+            }}>
+              {betslip.length}
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {betslip.length > 0 && (
+            <button
+              onClick={onClear}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: 10,
+                textDecoration: 'underline',
+              }}
+            >Clear All</button>
+          )}
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              fontSize: 16,
+              lineHeight: 1,
+            }}
+          >×</button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        maxHeight: 440,
+      }}>
+        {betslip.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: 'var(--text-muted)',
+            fontSize: 11,
+            fontStyle: 'italic',
+          }}>
+            Click on odds to add to your betslip
+          </div>
+        ) : (
+          betslip.map(item => (
+            <BetslipItem
+              key={item.id}
+              item={item}
+              onRemove={onRemove}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const BetslipWidget = ({ count, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        position: 'fixed',
+        bottom: 20,
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: '50%',
+        background: 'linear-gradient(135deg, var(--odds-blue), #4a8fe8)',
+        border: 'none',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 12px rgba(96, 165, 250, 0.4)',
+        transition: 'transform 0.15s ease',
+        zIndex: 1000,
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+    >
+      <span style={{ fontSize: 24 }}>📋</span>
+      {count > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: -4,
+          right: -4,
+          minWidth: 20,
+          height: 20,
+          borderRadius: '50%',
+          background: 'var(--odds-red)',
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '0 4px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        }}>
+          {count}
+        </div>
+      )}
+    </button>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const FlagEmoji = ({ league }) => {
   const flags = {
     'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
@@ -482,7 +682,7 @@ const MatchRow = ({ match, odds, bestOdds, isEven, favourites, onToggleFav, mark
 
 // ─── Expanded Odds Detail ─────────────────────────────────────────────────────
 
-const OddsDetail = ({ oddsData }) => {
+const OddsDetail = ({ oddsData, onAddToBetslip }) => {
   const [detailTab, setDetailTab] = useState('h2h');
 
   if (!oddsData || !oddsData.bookmakers || oddsData.bookmakers.length === 0) {
@@ -677,19 +877,94 @@ const OddsDetail = ({ oddsData }) => {
                     {bookie.title}
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
-                    <span className={`font-mono-odds ${home === bestHome ? 'odds-cell best' : 'odds-cell'}`}>
+                    <div
+                      className={`font-mono-odds ${home === bestHome ? 'odds-cell best' : 'odds-cell'}`}
+                      onClick={() => home && onAddToBetslip(
+                        oddsData.id,
+                        {
+                          homeTeam: oddsData.home_team,
+                          awayTeam: oddsData.away_team,
+                          sportKey: oddsData.sport_key,
+                          commenceTime: oddsData.commence_time
+                        },
+                        'home',
+                        'Home Win',
+                        bookie.key,
+                        bookie.title,
+                        home,
+                        'h2h'
+                      )}
+                      style={{
+                        cursor: home ? 'pointer' : 'default',
+                        transition: 'background-color 0.1s ease',
+                        padding: '2px 4px',
+                        borderRadius: 2,
+                      }}
+                      onMouseEnter={(e) => home && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                       {home ? home.toFixed(3) : '-'}
-                    </span>
+                    </div>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
-                    <span className={`font-mono-odds ${draw === bestDraw ? 'odds-cell best' : 'odds-cell'}`}>
+                    <div
+                      className={`font-mono-odds ${draw === bestDraw ? 'odds-cell best' : 'odds-cell'}`}
+                      onClick={() => draw && onAddToBetslip(
+                        oddsData.id,
+                        {
+                          homeTeam: oddsData.home_team,
+                          awayTeam: oddsData.away_team,
+                          sportKey: oddsData.sport_key,
+                          commenceTime: oddsData.commence_time
+                        },
+                        'draw',
+                        'Draw',
+                        bookie.key,
+                        bookie.title,
+                        draw,
+                        'h2h'
+                      )}
+                      style={{
+                        cursor: draw ? 'pointer' : 'default',
+                        transition: 'background-color 0.1s ease',
+                        padding: '2px 4px',
+                        borderRadius: 2,
+                      }}
+                      onMouseEnter={(e) => draw && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                       {draw ? draw.toFixed(3) : '-'}
-                    </span>
+                    </div>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
-                    <span className={`font-mono-odds ${away === bestAway ? 'odds-cell best' : 'odds-cell'}`}>
+                    <div
+                      className={`font-mono-odds ${away === bestAway ? 'odds-cell best' : 'odds-cell'}`}
+                      onClick={() => away && onAddToBetslip(
+                        oddsData.id,
+                        {
+                          homeTeam: oddsData.home_team,
+                          awayTeam: oddsData.away_team,
+                          sportKey: oddsData.sport_key,
+                          commenceTime: oddsData.commence_time
+                        },
+                        'away',
+                        'Away Win',
+                        bookie.key,
+                        bookie.title,
+                        away,
+                        'h2h'
+                      )}
+                      style={{
+                        cursor: away ? 'pointer' : 'default',
+                        transition: 'background-color 0.1s ease',
+                        padding: '2px 4px',
+                        borderRadius: 2,
+                      }}
+                      onMouseEnter={(e) => away && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                       {away ? away.toFixed(3) : '-'}
-                    </span>
+                    </div>
                   </td>
                   <td style={{
                     textAlign: 'center', padding: '5px 8px',
@@ -787,14 +1062,64 @@ const OddsDetail = ({ oddsData }) => {
                     </span>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
-                    <span className={`font-mono-odds ${over && over.price === bestOver ? 'odds-cell best' : 'odds-cell'}`}>
+                    <div
+                      className={`font-mono-odds ${over && over.price === bestOver ? 'odds-cell best' : 'odds-cell'}`}
+                      onClick={() => over && onAddToBetslip(
+                        oddsData.id,
+                        {
+                          homeTeam: oddsData.home_team,
+                          awayTeam: oddsData.away_team,
+                          sportKey: oddsData.sport_key,
+                          commenceTime: oddsData.commence_time
+                        },
+                        'over',
+                        `Over ${line}`,
+                        bookie.key,
+                        bookie.title,
+                        over.price,
+                        'totals'
+                      )}
+                      style={{
+                        cursor: over ? 'pointer' : 'default',
+                        transition: 'background-color 0.1s ease',
+                        padding: '2px 4px',
+                        borderRadius: 2,
+                      }}
+                      onMouseEnter={(e) => over && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                       {over ? over.price.toFixed(3) : '-'}
-                    </span>
+                    </div>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
-                    <span className={`font-mono-odds ${under && under.price === bestUnder ? 'odds-cell best' : 'odds-cell'}`}>
+                    <div
+                      className={`font-mono-odds ${under && under.price === bestUnder ? 'odds-cell best' : 'odds-cell'}`}
+                      onClick={() => under && onAddToBetslip(
+                        oddsData.id,
+                        {
+                          homeTeam: oddsData.home_team,
+                          awayTeam: oddsData.away_team,
+                          sportKey: oddsData.sport_key,
+                          commenceTime: oddsData.commence_time
+                        },
+                        'under',
+                        `Under ${line}`,
+                        bookie.key,
+                        bookie.title,
+                        under.price,
+                        'totals'
+                      )}
+                      style={{
+                        cursor: under ? 'pointer' : 'default',
+                        transition: 'background-color 0.1s ease',
+                        padding: '2px 4px',
+                        borderRadius: 2,
+                      }}
+                      onMouseEnter={(e) => under && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                       {under ? under.price.toFixed(3) : '-'}
-                    </span>
+                    </div>
                   </td>
                   <td style={{
                     textAlign: 'center', padding: '5px 8px',
@@ -873,6 +1198,8 @@ function App() {
   const [error, setError] = useState(null);
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [marketTab, setMarketTab] = useState('h2h');
+  const [betslip, setBetslip] = useState([]);
+  const [betslipOpen, setBetslipOpen] = useState(false);
 
   // Load leagues on mount
   useEffect(() => {
@@ -931,6 +1258,31 @@ function App() {
     };
     fetchMatches();
   }, [selectedLeagues]);
+
+  // Load betslip from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('sharpOdds_betslip');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Filter out old matches (> 7 days)
+        const now = new Date();
+        const filtered = parsed.filter(item => {
+          const matchDate = new Date(item.matchInfo.commenceTime);
+          const daysDiff = (now - matchDate) / (1000 * 60 * 60 * 24);
+          return daysDiff < 7;
+        });
+        setBetslip(filtered);
+      } catch (err) {
+        console.error('Failed to load betslip from localStorage:', err);
+      }
+    }
+  }, []);
+
+  // Save betslip to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('sharpOdds_betslip', JSON.stringify(betslip));
+  }, [betslip]);
 
   // Fetch odds ONLY when user clicks a match (saves API quota)
   const fetchOddsForMatch = useCallback(async (matchId) => {
@@ -1053,6 +1405,45 @@ function App() {
     fetchOddsForMatch(matchId);
   }, [fetchOddsForMatch]);
 
+  // Betslip handlers
+  const handleAddToBetslip = useCallback((matchId, matchInfo, outcome, outcomeLabel, bookmaker, bookmakerTitle, odds, marketType) => {
+    setBetslip(prev => {
+      // Check if exact same selection already exists
+      const exists = prev.find(item =>
+        item.matchId === matchId &&
+        item.outcome === outcome &&
+        item.bookmaker === bookmaker &&
+        item.marketType === marketType
+      );
+      if (exists) return prev; // Don't add duplicates
+
+      const newItem = {
+        id: `${matchId}-${outcome}-${bookmaker}-${marketType}-${Date.now()}`,
+        matchId,
+        matchInfo,
+        outcome,
+        outcomeLabel,
+        bookmaker,
+        bookmakerTitle,
+        odds,
+        marketType
+      };
+      return [...prev, newItem];
+    });
+  }, []);
+
+  const handleRemoveFromBetslip = useCallback((itemId) => {
+    setBetslip(prev => prev.filter(item => item.id !== itemId));
+  }, []);
+
+  const handleClearBetslip = useCallback(() => {
+    setBetslip([]);
+  }, []);
+
+  const handleToggleBetslip = useCallback(() => {
+    setBetslipOpen(prev => !prev);
+  }, []);
+
   const totalMatches = useMemo(() =>
     selectedLeagues.reduce((sum, key) => sum + (leagueMatches[key]?.length || 0), 0),
     [selectedLeagues, leagueMatches]
@@ -1126,7 +1517,7 @@ function App() {
                     {expandedMatch === match.id && (
                       loadingOdds.has(match.id)
                         ? <div style={{ background: 'var(--bg-tertiary)', padding: '12px 16px', borderBottom: '2px solid var(--border-accent)', fontSize: 12, color: 'var(--odds-yellow)' }}>Loading odds...</div>
-                        : <OddsDetail oddsData={leagueOdds[match.id]} />
+                        : <OddsDetail oddsData={leagueOdds[match.id]} onAddToBetslip={handleAddToBetslip} />
                     )}
                   </div>
                 );
@@ -1180,7 +1571,7 @@ function App() {
                         {expandedMatch === match.id && (
                           loadingOdds.has(match.id)
                             ? <div style={{ background: 'var(--bg-tertiary)', padding: '12px 16px', borderBottom: '2px solid var(--border-accent)', fontSize: 12, color: 'var(--odds-yellow)' }}>Loading odds...</div>
-                            : <OddsDetail oddsData={leagueOdds[match.id]} />
+                            : <OddsDetail oddsData={leagueOdds[match.id]} onAddToBetslip={handleAddToBetslip} />
                         )}
                       </div>
                     );
@@ -1298,6 +1689,19 @@ function App() {
           </section>
         </div>
       </div>
+
+      {/* Betslip components */}
+      <BetslipWidget
+        count={betslip.length}
+        onClick={handleToggleBetslip}
+      />
+      <BetslipPanel
+        betslip={betslip}
+        isOpen={betslipOpen}
+        onRemove={handleRemoveFromBetslip}
+        onClear={handleClearBetslip}
+        onClose={handleToggleBetslip}
+      />
     </div>
   );
 }

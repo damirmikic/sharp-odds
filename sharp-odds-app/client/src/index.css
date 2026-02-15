@@ -291,3 +291,34 @@ select {
   background-position: right 10px center;
   padding-right: 30px;
 }
+
+/* ─── Betslip Animations ────────────────────────────────────────────────── */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Betslip scrollbar styling */
+.betslip-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.betslip-scroll::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.betslip-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 3px;
+}
+
+.betslip-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
