@@ -1412,7 +1412,7 @@ const MatchRow = ({ match, odds, bestOdds, isEven, favourites, onToggleFav, mark
           textAlign: 'center',
           padding: '3px 8px',
           fontSize: 11,
-          color: 'var(--text-muted)',
+          color: 'gold',
           fontStyle: 'italic',
         }}>
           click to load odds
