@@ -21,89 +21,262 @@ const ChevronIcon = ({ open }) => (
 
 // ─── Betslip Components ──────────────────────────────────────────────────────
 
-const BetslipItem = ({ item, onRemove }) => {
+const BetslipItem = ({ item, onRemove, onUpdateCustomOdds }) => {
   return (
     <div style={{
-      padding: '10px',
-      background: 'var(--bg-row-odd)',
-      borderBottom: '1px solid var(--border-subtle)',
+      padding: '12px',
+      background: 'linear-gradient(135deg, #2e4158 0%, #253649 100%)',
+      borderBottom: '1px solid #3a5575',
+      borderLeft: '3px solid #4ade80',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-bright)' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', marginBottom: 4 }}>
             {item.matchInfo.homeTeam} vs {item.matchInfo.awayTeam}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-            {item.outcomeLabel} • {item.bookmakerTitle}
+          <div style={{
+            fontSize: 13,
+            fontWeight: 800,
+            color: '#4ade80',
+            marginBottom: 2,
+            textShadow: '0 2px 6px rgba(74, 222, 128, 0.3)',
+          }}>
+            ⭐ {item.outcomeLabel}
+          </div>
+          <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 500 }}>
+            {item.bookmakerTitle}
           </div>
         </div>
         <button
           onClick={() => onRemove(item.id)}
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
+            background: 'rgba(248, 113, 113, 0.15)',
+            border: '1px solid rgba(248, 113, 113, 0.3)',
+            borderRadius: 4,
+            width: 22,
+            height: 22,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#f87171',
             cursor: 'pointer',
             fontSize: 16,
+            fontWeight: 600,
             padding: 0,
             lineHeight: 1,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(248, 113, 113, 0.3)';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(248, 113, 113, 0.15)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
         >×</button>
       </div>
       <div style={{
-        fontSize: 18,
-        fontFamily: 'JetBrains Mono, Consolas, monospace',
-        fontWeight: 600,
-        color: 'var(--odds-blue)',
-        marginTop: 6,
+        marginTop: 8,
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr auto 1fr',
+        gap: 8,
+        alignItems: 'center',
       }}>
-        {item.odds.toFixed(3)}
+        {/* Best odds */}
+        <div>
+          <div style={{ fontSize: 9, color: '#94a3b8', marginBottom: 2, fontWeight: 600 }}>
+            BEST ODDS
+          </div>
+          <div style={{
+            fontSize: 14,
+            fontFamily: 'JetBrains Mono, Consolas, monospace',
+            fontWeight: 700,
+            color: '#94a3b8',
+            textAlign: 'center',
+          }}>
+            {item.odds.toFixed(3)}
+          </div>
+        </div>
+
+        {/* Arrow 1 */}
+        <div style={{ color: '#facc15', fontSize: 14, marginTop: 12 }}>→</div>
+
+        {/* No-vig odds */}
+        <div>
+          <div style={{ fontSize: 9, color: '#fbbf24', marginBottom: 2, fontWeight: 600 }}>
+            NO VIG
+          </div>
+          <div style={{
+            fontSize: 14,
+            fontFamily: 'JetBrains Mono, Consolas, monospace',
+            fontWeight: 700,
+            color: '#fbbf24',
+            textAlign: 'center',
+            textShadow: '0 2px 6px rgba(251, 191, 36, 0.3)',
+          }}>
+            {item.noVigOdds ? item.noVigOdds.toFixed(3) : item.odds.toFixed(3)}
+          </div>
+        </div>
+
+        {/* Arrow 2 */}
+        <div style={{ color: '#facc15', fontSize: 14, marginTop: 12 }}>→</div>
+
+        {/* Custom odds input */}
+        <div>
+          <div style={{ fontSize: 9, color: '#4ade80', marginBottom: 2, fontWeight: 600 }}>
+            MY ODDS
+          </div>
+          <input
+            type="number"
+            step="0.01"
+            placeholder={item.noVigOdds?.toFixed(2) || item.odds.toFixed(2)}
+            value={item.customOdds || ''}
+            onChange={(e) => onUpdateCustomOdds(item.id, e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              padding: '4px 6px',
+              fontSize: 14,
+              fontFamily: 'JetBrains Mono, Consolas, monospace',
+              fontWeight: 700,
+              color: '#4ade80',
+              background: 'rgba(74, 222, 128, 0.1)',
+              border: '2px solid rgba(74, 222, 128, 0.3)',
+              borderRadius: 6,
+              outline: 'none',
+              textAlign: 'center',
+              transition: 'all 0.15s ease',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.6)';
+              e.currentTarget.style.background = 'rgba(74, 222, 128, 0.15)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.3)';
+              e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)';
+            }}
+          />
+        </div>
       </div>
     </div>
   );
 };
 
-const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose }) => {
+const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = { x: 20, y: 70 }, onDragStart, onUpdateCustomOdds, stake = 10, onStakeChange }) => {
+  const [activeTab, setActiveTab] = useState('selections');
+
   if (!isOpen) return null;
+
+  // Calculate best odds total (using original odds)
+  const bestTotalOdds = betslip.length > 0
+    ? betslip.reduce((acc, item) => acc * item.odds, 1)
+    : 0;
+
+  // Calculate no-vig odds total (using devigged odds)
+  const noVigTotalOdds = betslip.length > 0
+    ? betslip.reduce((acc, item) => acc * (item.noVigOdds || item.odds), 1)
+    : 0;
+
+  // Calculate custom odds total (using user's custom odds)
+  const customTotalOdds = betslip.length > 0
+    ? betslip.reduce((acc, item) => {
+        const customOdds = item.customOdds && parseFloat(item.customOdds) > 0
+          ? parseFloat(item.customOdds)
+          : (item.noVigOdds || item.odds);
+        return acc * customOdds;
+      }, 1)
+    : 0;
+
+  // Check if any custom odds are being used
+  const hasCustomOdds = betslip.some(item => item.customOdds && parseFloat(item.customOdds) > 0);
+
+  // Calculate percentage differences
+  const diffVsBest = bestTotalOdds > 0 ? ((customTotalOdds - bestTotalOdds) / bestTotalOdds * 100) : 0;
+  const diffVsNoVig = noVigTotalOdds > 0 ? ((customTotalOdds - noVigTotalOdds) / noVigTotalOdds * 100) : 0;
+
+  // Save betslip as CSV
+  const handleSaveBetslipCSV = () => {
+    // CSV Header
+    let csv = 'Match,Selection,Bookmaker,Best Odds,No-Vig Odds,My Odds\n';
+
+    // Add each selection
+    betslip.forEach(item => {
+      const match = `"${item.matchInfo.homeTeam} vs ${item.matchInfo.awayTeam}"`;
+      const outcome = `"${item.outcomeLabel}"`;
+      const bookmaker = `"${item.bookmakerTitle}"`;
+      const bestOdds = item.odds.toFixed(3);
+      const noVigOdds = (item.noVigOdds || item.odds).toFixed(3);
+      const myOddsValue = item.customOdds ? parseFloat(item.customOdds) : (item.noVigOdds || item.odds);
+      const myOdds = myOddsValue.toFixed(3);
+
+      csv += `${match},${outcome},${bookmaker},${bestOdds},${noVigOdds},${myOdds}\n`;
+    });
+
+    // Add summary rows
+    csv += '\n';
+    csv += `Summary\n`;
+    csv += `Total Selections,${betslip.length}\n`;
+    csv += `Best Odds Total,${bestTotalOdds.toFixed(2)}\n`;
+    csv += `No-Vig Odds Total,${noVigTotalOdds.toFixed(2)}\n`;
+    csv += `My Odds Total,${customTotalOdds.toFixed(2)}\n`;
+    csv += `Stake,€${stake}\n`;
+    csv += `Potential Return,€${(customTotalOdds * stake).toFixed(2)}\n`;
+    csv += `Profit,€${((customTotalOdds * stake) - stake).toFixed(2)}\n`;
+    csv += `vs Best,${diffVsBest >= 0 ? '+' : ''}${diffVsBest.toFixed(1)}%,€${Math.abs((customTotalOdds - bestTotalOdds) * stake).toFixed(2)}\n`;
+    csv += `vs No-Vig,${diffVsNoVig >= 0 ? '+' : ''}${diffVsNoVig.toFixed(1)}%,€${Math.abs((customTotalOdds - noVigTotalOdds) * stake).toFixed(2)}\n`;
+    csv += `Date,${new Date().toLocaleString()}\n`;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(csv)
+      .then(() => alert('Betslip CSV copied to clipboard!'))
+      .catch(() => alert('Failed to copy betslip'));
+  };
 
   return (
     <div style={{
       position: 'fixed',
-      bottom: 70,
-      right: 20,
+      bottom: position.y,
+      right: position.x,
       width: 360,
       maxHeight: 500,
-      background: 'var(--bg-secondary)',
-      border: '1px solid var(--border-primary)',
-      borderRadius: 8,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+      background: 'linear-gradient(135deg, #2a3f5f 0%, #1e2f45 100%)',
+      border: '2px solid #4a7ba7',
+      borderRadius: 12,
+      boxShadow: '0 12px 40px rgba(74, 222, 128, 0.15), 0 0 0 1px rgba(250, 204, 21, 0.2)',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 1000,
       animation: 'slideUp 0.2s ease-out',
     }}>
       {/* Header */}
-      <div style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid var(--border-primary)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'var(--bg-tertiary)',
-        borderRadius: '8px 8px 0 0',
-      }}>
+      <div
+        onMouseDown={onDragStart}
+        style={{
+          padding: '12px 16px',
+          borderBottom: '2px solid #facc15',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, #3b5170 0%, #2a3f5f 100%)',
+          borderRadius: '10px 10px 0 0',
+          cursor: 'move',
+          userSelect: 'none',
+        }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 16 }}>📋</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-bright)' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#facc15', letterSpacing: '0.5px' }}>
             My Betslip
           </span>
           {betslip.length > 0 && (
             <span style={{
               fontSize: 10,
-              padding: '2px 6px',
-              borderRadius: 3,
-              background: 'var(--odds-blue)',
-              color: '#fff',
+              padding: '3px 8px',
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+              color: '#0a0f14',
+              fontWeight: 700,
+              boxShadow: '0 2px 6px rgba(74, 222, 128, 0.4)',
             }}>
               {betslip.length}
             </span>
@@ -111,37 +284,134 @@ const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose }) => {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {betslip.length > 0 && (
-            <button
-              onClick={onClear}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                fontSize: 10,
-                textDecoration: 'underline',
-              }}
-            >Clear All</button>
+            <>
+              <button
+                onClick={handleSaveBetslipCSV}
+                style={{
+                  background: 'rgba(74, 222, 128, 0.15)',
+                  border: '1px solid rgba(74, 222, 128, 0.3)',
+                  borderRadius: 4,
+                  padding: '4px 8px',
+                  color: '#4ade80',
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(74, 222, 128, 0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(74, 222, 128, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.3)';
+                }}
+              >📊 CSV</button>
+              <button
+                onClick={onClear}
+                style={{
+                  background: 'rgba(248, 113, 113, 0.15)',
+                  border: '1px solid rgba(248, 113, 113, 0.3)',
+                  borderRadius: 4,
+                  padding: '4px 8px',
+                  color: '#f87171',
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(248, 113, 113, 0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(248, 113, 113, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(248, 113, 113, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(248, 113, 113, 0.3)';
+                }}
+              >Clear All</button>
+            </>
           )}
           <button
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
+              background: 'rgba(148, 163, 184, 0.15)',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              borderRadius: 4,
+              width: 24,
+              height: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#94a3b8',
               cursor: 'pointer',
-              fontSize: 16,
+              fontSize: 18,
+              fontWeight: 600,
               lineHeight: 1,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(148, 163, 184, 0.25)';
+              e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(148, 163, 184, 0.15)';
+              e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.3)';
             }}
           >×</button>
         </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '2px solid #3a4560',
+        background: 'linear-gradient(135deg, #2a3548 0%, #1e2736 100%)',
+      }}>
+        <button
+          onClick={() => setActiveTab('selections')}
+          style={{
+            flex: 1,
+            padding: '10px 16px',
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            border: 'none',
+            background: activeTab === 'selections' ? 'rgba(74, 222, 128, 0.15)' : 'transparent',
+            borderBottom: activeTab === 'selections' ? '3px solid #4ade80' : '3px solid transparent',
+            color: activeTab === 'selections' ? '#4ade80' : '#94a3b8',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          📋 Selections
+        </button>
+        <button
+          onClick={() => setActiveTab('analysis')}
+          style={{
+            flex: 1,
+            padding: '10px 16px',
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            border: 'none',
+            background: activeTab === 'analysis' ? 'rgba(251, 191, 36, 0.15)' : 'transparent',
+            borderBottom: activeTab === 'analysis' ? '3px solid #fbbf24' : '3px solid transparent',
+            color: activeTab === 'analysis' ? '#fbbf24' : '#94a3b8',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          📊 Analysis
+        </button>
       </div>
 
       {/* Content */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        maxHeight: 440,
+        maxHeight: betslip.length > 0 ? (activeTab === 'selections' ? 420 : 340) : 440,
       }}>
         {betslip.length === 0 ? (
           <div style={{
@@ -153,16 +423,481 @@ const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose }) => {
           }}>
             Click on odds to add to your betslip
           </div>
+        ) : activeTab === 'selections' ? (
+          // Selections Tab - Compact View
+          betslip.map((item, idx) => (
+            <div key={item.id} style={{
+              padding: '10px 12px',
+              background: idx % 2 === 0 ? '#1e2433' : '#1a1f2e',
+              borderBottom: '1px solid #2a3548',
+              borderLeft: '3px solid #4ade80',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>
+                    {item.matchInfo.homeTeam} vs {item.matchInfo.awayTeam}
+                  </div>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: '#4ade80',
+                    textShadow: '0 2px 6px rgba(74, 222, 128, 0.3)',
+                  }}>
+                    ⭐ {item.outcomeLabel}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 2 }}>
+                    {item.bookmakerTitle}
+                  </div>
+                </div>
+                <button
+                  onClick={() => onRemove(item.id)}
+                  style={{
+                    background: 'rgba(248, 113, 113, 0.15)',
+                    border: '1px solid rgba(248, 113, 113, 0.3)',
+                    borderRadius: 4,
+                    width: 20,
+                    height: 20,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#f87171',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    padding: 0,
+                    lineHeight: 1,
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.3)';
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(248, 113, 113, 0.15)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >×</button>
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1.2fr',
+                gap: 6,
+                fontSize: 10,
+                alignItems: 'center',
+              }}>
+                <div style={{
+                  fontFamily: 'JetBrains Mono, Consolas, monospace',
+                  color: '#94a3b8',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 8, marginBottom: 2, fontWeight: 600 }}>BEST</div>
+                  <div style={{ fontWeight: 600 }}>{item.odds.toFixed(2)}</div>
+                </div>
+                <div style={{
+                  fontFamily: 'JetBrains Mono, Consolas, monospace',
+                  color: '#fbbf24',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 8, marginBottom: 2, fontWeight: 600 }}>FAIR</div>
+                  <div style={{ fontWeight: 600 }}>{(item.noVigOdds || item.odds).toFixed(2)}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 8, marginBottom: 2, color: '#4ade80', fontWeight: 600 }}>MY ODDS</div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder={(item.noVigOdds || item.odds).toFixed(2)}
+                    value={item.customOdds || ''}
+                    onChange={(e) => onUpdateCustomOdds(item.id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      width: '100%',
+                      padding: '3px 4px',
+                      fontSize: 11,
+                      fontFamily: 'JetBrains Mono, Consolas, monospace',
+                      fontWeight: 700,
+                      color: '#4ade80',
+                      background: 'rgba(74, 222, 128, 0.1)',
+                      border: '1px solid rgba(74, 222, 128, 0.3)',
+                      borderRadius: 4,
+                      outline: 'none',
+                      textAlign: 'center',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.6)';
+                      e.currentTarget.style.background = 'rgba(74, 222, 128, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(74, 222, 128, 0.3)';
+                      e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)';
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))
         ) : (
+          // Analysis Tab - Detailed View
           betslip.map(item => (
             <BetslipItem
               key={item.id}
               item={item}
               onRemove={onRemove}
+              onUpdateCustomOdds={onUpdateCustomOdds}
             />
           ))
         )}
       </div>
+
+      {/* Quick Summary for Selections Tab */}
+      {betslip.length > 0 && activeTab === 'selections' && (
+        <div style={{
+          borderTop: '2px solid #4ade80',
+          background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.1) 100%)',
+          padding: '12px 16px',
+          borderRadius: '0 0 10px 10px',
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontSize: 9, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>
+                {betslip.length === 1 ? 'SINGLE' : `${betslip.length}-FOLD ACCUMULATOR`}
+              </div>
+              <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                Total Odds
+              </div>
+            </div>
+            <div style={{
+              fontSize: 24,
+              fontFamily: 'JetBrains Mono, Consolas, monospace',
+              fontWeight: 800,
+              color: '#4ade80',
+              textShadow: '0 2px 12px rgba(74, 222, 128, 0.5)',
+            }}>
+              {customTotalOdds.toFixed(2)}
+            </div>
+          </div>
+          <div style={{
+            marginTop: 8,
+            fontSize: 10,
+            color: '#94a3b8',
+            textAlign: 'center',
+          }}>
+            Switch to Analysis tab for detailed odds comparison
+          </div>
+        </div>
+      )}
+
+      {/* Total Odds Section - Only show in Analysis tab */}
+      {betslip.length > 0 && activeTab === 'analysis' && (
+        <div style={{
+          borderTop: '2px solid #facc15',
+          background: 'linear-gradient(135deg, #3b5170 0%, #2a3f5f 100%)',
+          padding: '14px 16px',
+          borderRadius: '0 0 10px 10px',
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+          }}>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#94a3b8',
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+            }}>
+              Total Selections
+            </span>
+            <span style={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#facc15',
+              textShadow: '0 2px 6px rgba(251, 191, 36, 0.3)',
+            }}>
+              {betslip.length}
+            </span>
+          </div>
+
+          {/* Stake input */}
+          <div style={{
+            marginBottom: 10,
+            padding: '10px 12px',
+            background: 'rgba(96, 165, 250, 0.1)',
+            borderRadius: 6,
+            border: '2px solid rgba(96, 165, 250, 0.3)',
+          }}>
+            <div style={{
+              fontSize: 9,
+              color: '#60a5fa',
+              fontWeight: 600,
+              marginBottom: 4,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              Stake Amount (€)
+            </div>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              placeholder="10"
+              value={stake}
+              onChange={(e) => onStakeChange(parseFloat(e.target.value) || 0)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                fontSize: 16,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                fontWeight: 700,
+                color: '#60a5fa',
+                background: 'rgba(96, 165, 250, 0.05)',
+                border: '2px solid rgba(96, 165, 250, 0.4)',
+                borderRadius: 6,
+                outline: 'none',
+                textAlign: 'center',
+                transition: 'all 0.15s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.6)';
+                e.currentTarget.style.background = 'rgba(96, 165, 250, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.4)';
+                e.currentTarget.style.background = 'rgba(96, 165, 250, 0.05)';
+              }}
+            />
+          </div>
+
+          {/* Bet type header */}
+          <div style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#facc15',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            marginBottom: 10,
+            textAlign: 'center',
+            textShadow: '0 2px 6px rgba(251, 191, 36, 0.3)',
+          }}>
+            {betslip.length === 1 ? '⭐ Single' : `⭐ ${betslip.length}-Fold Accumulator`}
+          </div>
+
+          {/* Best Odds Total */}
+          <div style={{
+            padding: '10px 12px',
+            background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.1) 100%)',
+            borderRadius: 6,
+            border: '2px solid rgba(148, 163, 184, 0.3)',
+            marginBottom: 8,
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <div>
+                <div style={{
+                  fontSize: 9,
+                  color: '#94a3b8',
+                  fontWeight: 600,
+                  marginBottom: 2,
+                }}>
+                  BEST ODDS TOTAL
+                </div>
+                <div style={{
+                  fontSize: 10,
+                  color: '#94a3b8',
+                  fontWeight: 500,
+                }}>
+                  Stake €{stake} → €{(bestTotalOdds * stake).toFixed(2)}
+                </div>
+              </div>
+              <div style={{
+                fontSize: 20,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                fontWeight: 700,
+                color: '#94a3b8',
+                letterSpacing: '-0.5px',
+              }}>
+                {bestTotalOdds.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          {/* No-Vig Odds Total */}
+          <div style={{
+            padding: '10px 12px',
+            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.1) 100%)',
+            borderRadius: 6,
+            border: '2px solid rgba(251, 191, 36, 0.4)',
+            marginBottom: 8,
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <div>
+                <div style={{
+                  fontSize: 9,
+                  color: '#fbbf24',
+                  fontWeight: 600,
+                  marginBottom: 2,
+                }}>
+                  NO-VIG ODDS TOTAL
+                </div>
+                <div style={{
+                  fontSize: 10,
+                  color: '#94a3b8',
+                  fontWeight: 500,
+                }}>
+                  Stake €{stake} → <span style={{ color: '#fbbf24', fontWeight: 600 }}>€{(noVigTotalOdds * stake).toFixed(2)}</span>
+                </div>
+              </div>
+              <div style={{
+                fontSize: 20,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                fontWeight: 700,
+                color: '#fbbf24',
+                letterSpacing: '-0.5px',
+                textShadow: '0 2px 8px rgba(251, 191, 36, 0.3)',
+              }}>
+                {noVigTotalOdds.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          {/* My Odds Total */}
+          <div style={{
+            padding: '10px 12px',
+            background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.1) 100%)',
+            borderRadius: 6,
+            border: '2px solid rgba(74, 222, 128, 0.4)',
+            boxShadow: '0 4px 12px rgba(74, 222, 128, 0.2)',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <div>
+                <div style={{
+                  fontSize: 9,
+                  color: '#4ade80',
+                  fontWeight: 600,
+                  marginBottom: 2,
+                }}>
+                  MY ODDS TOTAL
+                </div>
+                <div style={{
+                  fontSize: 10,
+                  color: '#94a3b8',
+                  fontWeight: 500,
+                }}>
+                  Stake €{stake} → <span style={{ color: '#4ade80', fontWeight: 700 }}>€{(customTotalOdds * stake).toFixed(2)}</span>
+                </div>
+              </div>
+              <div style={{
+                fontSize: 20,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                fontWeight: 700,
+                color: '#4ade80',
+                letterSpacing: '-0.5px',
+                textShadow: '0 2px 12px rgba(74, 222, 128, 0.4)',
+              }}>
+                {customTotalOdds.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          {/* Percentage Difference Indicators */}
+          <div style={{
+            marginTop: 8,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 8,
+          }}>
+            {/* vs Best Odds */}
+            <div style={{
+              padding: '8px 10px',
+              background: diffVsBest >= 0
+                ? 'rgba(74, 222, 128, 0.1)'
+                : 'rgba(248, 113, 113, 0.1)',
+              borderRadius: 6,
+              border: `2px solid ${diffVsBest >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+              textAlign: 'center',
+            }}>
+              <div style={{
+                fontSize: 8,
+                color: '#94a3b8',
+                fontWeight: 600,
+                marginBottom: 2,
+                textTransform: 'uppercase',
+              }}>
+                vs Best
+              </div>
+              <div style={{
+                fontSize: 16,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                color: diffVsBest >= 0 ? '#4ade80' : '#f87171',
+                fontWeight: 800,
+              }}>
+                {diffVsBest >= 0 ? '+' : ''}{diffVsBest.toFixed(1)}%
+              </div>
+              <div style={{
+                fontSize: 8,
+                color: '#94a3b8',
+                marginTop: 2,
+              }}>
+                {diffVsBest >= 0 ? '↑' : '↓'} €{Math.abs((customTotalOdds - bestTotalOdds) * stake).toFixed(2)}
+              </div>
+            </div>
+
+            {/* vs No-Vig */}
+            <div style={{
+              padding: '8px 10px',
+              background: diffVsNoVig >= 0
+                ? 'rgba(74, 222, 128, 0.1)'
+                : 'rgba(248, 113, 113, 0.1)',
+              borderRadius: 6,
+              border: `2px solid ${diffVsNoVig >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+              textAlign: 'center',
+            }}>
+              <div style={{
+                fontSize: 8,
+                color: '#94a3b8',
+                fontWeight: 600,
+                marginBottom: 2,
+                textTransform: 'uppercase',
+              }}>
+                vs No-Vig
+              </div>
+              <div style={{
+                fontSize: 16,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                color: diffVsNoVig >= 0 ? '#4ade80' : '#f87171',
+                fontWeight: 800,
+              }}>
+                {diffVsNoVig >= 0 ? '+' : ''}{diffVsNoVig.toFixed(1)}%
+              </div>
+              <div style={{
+                fontSize: 8,
+                color: '#94a3b8',
+                marginTop: 2,
+              }}>
+                {diffVsNoVig >= 0 ? '↑' : '↓'} €{Math.abs((customTotalOdds - noVigTotalOdds) * stake).toFixed(2)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -175,40 +910,47 @@ const BetslipWidget = ({ count, onClick }) => {
         position: 'fixed',
         bottom: 20,
         right: 20,
-        width: 56,
-        height: 56,
+        width: 60,
+        height: 60,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, var(--odds-blue), #4a8fe8)',
-        border: 'none',
+        background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
+        border: '3px solid #facc15',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 4px 12px rgba(96, 165, 250, 0.4)',
-        transition: 'transform 0.15s ease',
+        boxShadow: '0 6px 20px rgba(74, 222, 128, 0.6), 0 0 0 2px rgba(250, 204, 21, 0.3)',
+        transition: 'all 0.2s ease',
         zIndex: 1000,
       }}
-      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.15) rotate(5deg)';
+        e.currentTarget.style.boxShadow = '0 8px 28px rgba(74, 222, 128, 0.8), 0 0 0 3px rgba(250, 204, 21, 0.5)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+        e.currentTarget.style.boxShadow = '0 6px 20px rgba(74, 222, 128, 0.6), 0 0 0 2px rgba(250, 204, 21, 0.3)';
+      }}
     >
-      <span style={{ fontSize: 24 }}>📋</span>
+      <span style={{ fontSize: 26 }}>📋</span>
       {count > 0 && (
         <div style={{
           position: 'absolute',
-          top: -4,
-          right: -4,
-          minWidth: 20,
-          height: 20,
+          top: -6,
+          right: -6,
+          minWidth: 24,
+          height: 24,
           borderRadius: '50%',
-          background: 'var(--odds-red)',
-          color: '#fff',
-          fontSize: 11,
-          fontWeight: 700,
+          background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+          color: '#0a0f14',
+          fontSize: 12,
+          fontWeight: 800,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '0 4px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          padding: '0 5px',
+          boxShadow: '0 3px 12px rgba(251, 191, 36, 0.8)',
+          border: '2px solid #4ade80',
         }}>
           {count}
         </div>
@@ -892,7 +1634,8 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                         bookie.key,
                         bookie.title,
                         home,
-                        'h2h'
+                        'h2h',
+                        { home, draw, away }
                       )}
                       style={{
                         cursor: home ? 'pointer' : 'default',
@@ -922,7 +1665,8 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                         bookie.key,
                         bookie.title,
                         draw,
-                        'h2h'
+                        'h2h',
+                        { home, draw, away }
                       )}
                       style={{
                         cursor: draw ? 'pointer' : 'default',
@@ -952,7 +1696,8 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                         bookie.key,
                         bookie.title,
                         away,
-                        'h2h'
+                        'h2h',
+                        { home, draw, away }
                       )}
                       style={{
                         cursor: away ? 'pointer' : 'default',
@@ -1077,7 +1822,8 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                         bookie.key,
                         bookie.title,
                         over.price,
-                        'totals'
+                        'totals',
+                        { over: over.price, under: under?.price }
                       )}
                       style={{
                         cursor: over ? 'pointer' : 'default',
@@ -1107,7 +1853,8 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                         bookie.key,
                         bookie.title,
                         under.price,
-                        'totals'
+                        'totals',
+                        { over: over?.price, under: under.price }
                       )}
                       style={{
                         cursor: under ? 'pointer' : 'default',
@@ -1200,6 +1947,10 @@ function App() {
   const [marketTab, setMarketTab] = useState('h2h');
   const [betslip, setBetslip] = useState([]);
   const [betslipOpen, setBetslipOpen] = useState(false);
+  const [betslipPosition, setBetslipPosition] = useState({ x: 20, y: 70 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [stake, setStake] = useState(10);
 
   // Load leagues on mount
   useEffect(() => {
@@ -1405,8 +2156,45 @@ function App() {
     fetchOddsForMatch(matchId);
   }, [fetchOddsForMatch]);
 
+  // Betslip drag handlers
+  const handleDragStart = useCallback((e) => {
+    setIsDragging(true);
+    const rect = e.currentTarget.parentElement.getBoundingClientRect();
+    setDragOffset({
+      x: window.innerWidth - e.clientX - betslipPosition.x,
+      y: window.innerHeight - e.clientY - betslipPosition.y,
+    });
+  }, [betslipPosition]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const newX = window.innerWidth - e.clientX - dragOffset.x;
+      const newY = window.innerHeight - e.clientY - dragOffset.y;
+
+      // Constrain position to viewport
+      const constrainedX = Math.max(20, Math.min(newX, window.innerWidth - 380));
+      const constrainedY = Math.max(20, Math.min(newY, window.innerHeight - 100));
+
+      setBetslipPosition({ x: constrainedX, y: constrainedY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
   // Betslip handlers
-  const handleAddToBetslip = useCallback((matchId, matchInfo, outcome, outcomeLabel, bookmaker, bookmakerTitle, odds, marketType) => {
+  const handleAddToBetslip = useCallback((matchId, matchInfo, outcome, outcomeLabel, bookmaker, bookmakerTitle, odds, marketType, allMarketOdds = {}) => {
     setBetslip(prev => {
       // Check if exact same selection already exists
       const exists = prev.find(item =>
@@ -1417,6 +2205,38 @@ function App() {
       );
       if (exists) return prev; // Don't add duplicates
 
+      // Calculate no-vig odds using classic normalization
+      let noVigOdds = odds; // Default to original odds
+
+      if (marketType === 'h2h' && allMarketOdds.home && allMarketOdds.draw && allMarketOdds.away) {
+        // Convert to implied probabilities
+        const probHome = 1 / allMarketOdds.home;
+        const probDraw = 1 / allMarketOdds.draw;
+        const probAway = 1 / allMarketOdds.away;
+        const totalProb = probHome + probDraw + probAway;
+
+        // Normalize and convert back to odds
+        if (outcome === 'home') {
+          noVigOdds = totalProb / probHome;
+        } else if (outcome === 'draw') {
+          noVigOdds = totalProb / probDraw;
+        } else if (outcome === 'away') {
+          noVigOdds = totalProb / probAway;
+        }
+      } else if (marketType === 'totals' && allMarketOdds.over && allMarketOdds.under) {
+        // Convert to implied probabilities
+        const probOver = 1 / allMarketOdds.over;
+        const probUnder = 1 / allMarketOdds.under;
+        const totalProb = probOver + probUnder;
+
+        // Normalize and convert back to odds
+        if (outcome === 'over') {
+          noVigOdds = totalProb / probOver;
+        } else if (outcome === 'under') {
+          noVigOdds = totalProb / probUnder;
+        }
+      }
+
       const newItem = {
         id: `${matchId}-${outcome}-${bookmaker}-${marketType}-${Date.now()}`,
         matchId,
@@ -1426,10 +2246,13 @@ function App() {
         bookmaker,
         bookmakerTitle,
         odds,
+        noVigOdds,
         marketType
       };
       return [...prev, newItem];
     });
+    // Auto-show betslip when adding a price
+    setBetslipOpen(true);
   }, []);
 
   const handleRemoveFromBetslip = useCallback((itemId) => {
@@ -1438,6 +2261,14 @@ function App() {
 
   const handleClearBetslip = useCallback(() => {
     setBetslip([]);
+  }, []);
+
+  const handleUpdateCustomOdds = useCallback((itemId, customOdds) => {
+    setBetslip(prev => prev.map(item =>
+      item.id === itemId
+        ? { ...item, customOdds }
+        : item
+    ));
   }, []);
 
   const handleToggleBetslip = useCallback(() => {
@@ -1701,6 +2532,11 @@ function App() {
         onRemove={handleRemoveFromBetslip}
         onClear={handleClearBetslip}
         onClose={handleToggleBetslip}
+        position={betslipPosition}
+        onDragStart={handleDragStart}
+        onUpdateCustomOdds={handleUpdateCustomOdds}
+        stake={stake}
+        onStakeChange={setStake}
       />
     </div>
   );
