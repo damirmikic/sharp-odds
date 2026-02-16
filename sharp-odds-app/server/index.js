@@ -18,11 +18,22 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
     }
+
+    // Allow all Vercel preview and production deployments
+    if (origin && origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // Allow in development mode
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
