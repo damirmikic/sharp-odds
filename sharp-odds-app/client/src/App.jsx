@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
+import { useAuth } from './hooks/useAuth';
+import { useBetslipSync } from './hooks/useBetslipSync';
+import { supabaseAPI } from './utils/betslipStorage';
+import UserMenu from './components/layout/UserMenu';
+import AuthModal from './components/auth/AuthModal';
+import BetslipHistory from './components/betslip/BetslipHistory';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
@@ -163,7 +169,7 @@ const BetslipItem = ({ item, onRemove, onUpdateCustomOdds }) => {
   );
 };
 
-const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = { x: 20, y: 70 }, onDragStart, onUpdateCustomOdds, stake = 10, onStakeChange }) => {
+const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = { x: 20, y: 70 }, onDragStart, onUpdateCustomOdds, stake = 10, onStakeChange, onSaveBetslipToHistory }) => {
   const [activeTab, setActiveTab] = useState('selections');
 
   if (!isOpen) return null;
@@ -896,6 +902,37 @@ const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = 
               </div>
             </div>
           </div>
+
+          {/* Save to History Button */}
+          <button
+            onClick={onSaveBetslipToHistory}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginTop: 16,
+              background: 'var(--odds-green)',
+              border: 'none',
+              borderRadius: 6,
+              color: 'white',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 2px 8px rgba(74, 222, 128, 0.3)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#22c55e';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 222, 128, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--odds-green)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(74, 222, 128, 0.3)';
+            }}
+          >
+            💾 Save to History
+          </button>
         </div>
       )}
     </div>
@@ -1131,7 +1168,7 @@ const Sidebar = ({ leagues, selectedLeagues, onToggleLeague, onSelectAll, onClea
 
 // ─── Header Bar ───────────────────────────────────────────────────────────────
 
-const TopBar = ({ matchCount, leagueCount, loading }) => (
+const TopBar = ({ matchCount, leagueCount, loading, user, onAuthClick, onOpenHistory }) => (
   <header style={{
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border-primary)',
@@ -1175,6 +1212,27 @@ const TopBar = ({ matchCount, leagueCount, loading }) => (
       )}
       <span>{matchCount} matches</span>
       <span>{leagueCount} leagues</span>
+
+      {/* Auth Section */}
+      {user ? (
+        <UserMenu onOpenHistory={onOpenHistory} />
+      ) : (
+        <button
+          onClick={onAuthClick}
+          style={{
+            background: 'var(--odds-green)',
+            border: 'none',
+            borderRadius: 4,
+            padding: '6px 12px',
+            color: 'white',
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Sign In
+        </button>
+      )}
     </div>
   </header>
 );
@@ -1951,6 +2009,14 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [stake, setStake] = useState(10);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
+  // Get auth context
+  const { user } = useAuth();
+
+  // Sync betslip with cloud (handles migration and auto-save)
+  useBetslipSync(betslip, setBetslip);
 
   // Load leagues on mount
   useEffect(() => {
@@ -2010,30 +2076,6 @@ function App() {
     fetchMatches();
   }, [selectedLeagues]);
 
-  // Load betslip from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('sharpOdds_betslip');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Filter out old matches (> 7 days)
-        const now = new Date();
-        const filtered = parsed.filter(item => {
-          const matchDate = new Date(item.matchInfo.commenceTime);
-          const daysDiff = (now - matchDate) / (1000 * 60 * 60 * 24);
-          return daysDiff < 7;
-        });
-        setBetslip(filtered);
-      } catch (err) {
-        console.error('Failed to load betslip from localStorage:', err);
-      }
-    }
-  }, []);
-
-  // Save betslip to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('sharpOdds_betslip', JSON.stringify(betslip));
-  }, [betslip]);
 
   // Fetch odds ONLY when user clicks a match (saves API quota)
   const fetchOddsForMatch = useCallback(async (matchId) => {
@@ -2271,6 +2313,45 @@ function App() {
     ));
   }, []);
 
+  const handleSaveBetslipToHistory = useCallback(async () => {
+    if (!user) {
+      alert('Sign in to save betslip history');
+      setAuthModalOpen(true);
+      return;
+    }
+
+    if (betslip.length === 0) {
+      alert('Add bets to save');
+      return;
+    }
+
+    const name = prompt('Name this betslip (optional):');
+    if (name === null) return; // User cancelled
+
+    // Calculate totals using custom odds if available
+    const totalOdds = betslip.reduce((acc, item) => {
+      const odds = item.customOdds && parseFloat(item.customOdds) > 0
+        ? parseFloat(item.customOdds)
+        : (item.noVigOdds || item.odds);
+      return acc * odds;
+    }, 1);
+
+    const historyData = {
+      name: name || `Betslip ${new Date().toLocaleDateString()}`,
+      items: betslip,
+      totalOdds: totalOdds,
+      stake: stake,
+      potentialReturn: stake * totalOdds,
+    };
+
+    try {
+      await supabaseAPI.saveBetslipHistory(user.id, historyData);
+      alert('✓ Betslip saved to history!');
+    } catch (err) {
+      alert('✗ Failed to save: ' + err.message);
+    }
+  }, [betslip, stake, user]);
+
   const handleToggleBetslip = useCallback(() => {
     setBetslipOpen(prev => !prev);
   }, []);
@@ -2316,7 +2397,14 @@ function App() {
 
       {/* Main Content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar matchCount={totalMatches} leagueCount={selectedLeagues.length} loading={loading || loadingOdds.size > 0} />
+        <TopBar
+          matchCount={totalMatches}
+          leagueCount={selectedLeagues.length}
+          loading={loading || loadingOdds.size > 0}
+          user={user}
+          onAuthClick={() => setAuthModalOpen(true)}
+          onOpenHistory={() => setHistoryModalOpen(true)}
+        />
 
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
@@ -2537,6 +2625,19 @@ function App() {
         onUpdateCustomOdds={handleUpdateCustomOdds}
         stake={stake}
         onStakeChange={setStake}
+        onSaveBetslipToHistory={handleSaveBetslipToHistory}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
+
+      {/* Betslip History Modal */}
+      <BetslipHistory
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
       />
     </div>
   );
