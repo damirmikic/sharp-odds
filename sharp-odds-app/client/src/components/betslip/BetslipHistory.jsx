@@ -241,157 +241,162 @@ export default function BetslipHistory({ isOpen, onClose }) {
                   </div>
 
                   {/* Stats Grid */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12,
-                      padding: 12,
-                      background: 'rgba(0, 0, 0, 0.2)',
-                      borderRadius: 6,
-                    }}
-                  >
-                    {/* Stake */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {(() => {
+                    const sharpTotalOdds = Array.isArray(item.items)
+                      ? item.items.reduce((acc, bet) => acc * (bet.odds || 1), 1)
+                      : 1;
+                    const noVigTotalOdds = Array.isArray(item.items)
+                      ? item.items.reduce((acc, bet) => acc * (bet.noVigOdds || bet.odds || 1), 1)
+                      : 1;
+                    const hasCustomOdds = Array.isArray(item.items) && item.items.some(bet => bet.customOdds && parseFloat(bet.customOdds) > 0);
+                    const customTotalOdds = hasCustomOdds
+                      ? item.items.reduce((acc, bet) => {
+                          const odds = bet.customOdds && parseFloat(bet.customOdds) > 0
+                            ? parseFloat(bet.customOdds)
+                            : (bet.noVigOdds || bet.odds || 1);
+                          return acc * odds;
+                        }, 1)
+                      : null;
+
+                    const sharpReturn = parseFloat(item.stake || 0) * sharpTotalOdds;
+                    const noVigReturn = parseFloat(item.stake || 0) * noVigTotalOdds;
+                    const customReturn = customTotalOdds !== null ? parseFloat(item.stake || 0) * customTotalOdds : null;
+
+                    const noVigVsSharp = sharpTotalOdds > 0 ? ((noVigTotalOdds - sharpTotalOdds) / sharpTotalOdds * 100) : 0;
+                    const customVsSharp = customTotalOdds !== null && sharpTotalOdds > 0 ? ((customTotalOdds - sharpTotalOdds) / sharpTotalOdds * 100) : null;
+                    const customVsNoVig = customTotalOdds !== null && noVigTotalOdds > 0 ? ((customTotalOdds - noVigTotalOdds) / noVigTotalOdds * 100) : null;
+
+                    const formatPct = (pct) => `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
+                    const pctColor = (pct) => pct >= 0 ? '#4ade80' : '#f87171';
+
+                    return (
                       <div
                         style={{
-                          fontSize: 9,
-                          color: '#94a3b8',
-                          textTransform: 'uppercase',
-                          fontWeight: 600,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 12,
+                          padding: 12,
+                          background: 'rgba(0, 0, 0, 0.2)',
+                          borderRadius: 6,
                         }}
                       >
-                        Stake
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontFamily: 'JetBrains Mono, Consolas, monospace',
-                          fontWeight: 700,
-                          color: '#94a3b8',
-                        }}
-                      >
-                        €{item.stake ? parseFloat(item.stake).toFixed(2) : '0.00'}
-                      </div>
-                    </div>
+                        {/* Stake */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
+                            Stake
+                          </div>
+                          <div style={{ fontSize: 14, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 700, color: '#94a3b8' }}>
+                            €{item.stake ? parseFloat(item.stake).toFixed(2) : '0.00'}
+                          </div>
+                        </div>
 
-                    {/* Divider */}
-                    <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.1)' }} />
+                        {/* Divider */}
+                        <div style={{ height: 1, background: 'rgba(255, 255, 255, 0.1)' }} />
 
-                    {/* Sharp Odds Total Return */}
-                    {(() => {
-                      const sharpTotalOdds = Array.isArray(item.items)
-                        ? item.items.reduce((acc, bet) => acc * (bet.odds || 1), 1)
-                        : 1;
-                      const sharpReturn = parseFloat(item.stake || 0) * sharpTotalOdds;
-                      return (
+                        {/* Sharp Odds Total */}
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                             <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
                               Sharp Odds Total
                             </span>
-                            <span style={{
-                              fontSize: 13,
-                              fontFamily: 'JetBrains Mono, Consolas, monospace',
-                              fontWeight: 600,
-                              color: '#60a5fa',
-                            }}>
+                            <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 600, color: '#60a5fa' }}>
                               {sharpTotalOdds.toFixed(2)}
                             </span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 8, color: '#94a3b8' }}>Return:</span>
-                            <span style={{
-                              fontSize: 14,
-                              fontFamily: 'JetBrains Mono, Consolas, monospace',
-                              fontWeight: 700,
-                              color: '#60a5fa',
-                            }}>
+                            <span style={{ fontSize: 14, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 700, color: '#60a5fa' }}>
                               €{sharpReturn.toFixed(2)}
                             </span>
                           </div>
                         </div>
-                      );
-                    })()}
 
-                    {/* No-Vig Odds Total Return */}
-                    {(() => {
-                      const noVigTotalOdds = Array.isArray(item.items)
-                        ? item.items.reduce((acc, bet) => acc * (bet.noVigOdds || bet.odds || 1), 1)
-                        : 1;
-                      const noVigReturn = parseFloat(item.stake || 0) * noVigTotalOdds;
-                      return (
+                        {/* No-Vig Odds Total */}
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                             <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
                               No-Vig Odds Total
                             </span>
-                            <span style={{
-                              fontSize: 13,
-                              fontFamily: 'JetBrains Mono, Consolas, monospace',
-                              fontWeight: 600,
-                              color: '#a78bfa',
-                            }}>
-                              {noVigTotalOdds.toFixed(2)}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{
+                                fontSize: 9,
+                                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                                fontWeight: 600,
+                                color: pctColor(noVigVsSharp),
+                                background: `${pctColor(noVigVsSharp)}1a`,
+                                border: `1px solid ${pctColor(noVigVsSharp)}40`,
+                                borderRadius: 4,
+                                padding: '1px 5px',
+                              }}>
+                                {formatPct(noVigVsSharp)} vs Sharp
+                              </span>
+                              <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 600, color: '#a78bfa' }}>
+                                {noVigTotalOdds.toFixed(2)}
+                              </span>
+                            </div>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 8, color: '#94a3b8' }}>Return:</span>
-                            <span style={{
-                              fontSize: 14,
-                              fontFamily: 'JetBrains Mono, Consolas, monospace',
-                              fontWeight: 700,
-                              color: '#a78bfa',
-                            }}>
+                            <span style={{ fontSize: 14, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 700, color: '#a78bfa' }}>
                               €{noVigReturn.toFixed(2)}
                             </span>
                           </div>
                         </div>
-                      );
-                    })()}
 
-                    {/* Custom Odds Total Return */}
-                    {(() => {
-                      const hasCustomOdds = Array.isArray(item.items) && item.items.some(bet => bet.customOdds && parseFloat(bet.customOdds) > 0);
-                      if (!hasCustomOdds) return null;
-
-                      const customTotalOdds = item.items.reduce((acc, bet) => {
-                        const odds = bet.customOdds && parseFloat(bet.customOdds) > 0
-                          ? parseFloat(bet.customOdds)
-                          : (bet.noVigOdds || bet.odds || 1);
-                        return acc * odds;
-                      }, 1);
-                      const customReturn = parseFloat(item.stake || 0) * customTotalOdds;
-                      return (
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
-                              Custom Odds Total
-                            </span>
-                            <span style={{
-                              fontSize: 13,
-                              fontFamily: 'JetBrains Mono, Consolas, monospace',
-                              fontWeight: 700,
-                              color: '#fbbf24',
-                            }}>
-                              {customTotalOdds.toFixed(2)}
-                            </span>
+                        {/* Custom Odds Total */}
+                        {customTotalOdds !== null && (
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
+                                Custom Odds Total
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                                  {customVsSharp !== null && (
+                                    <span style={{
+                                      fontSize: 9,
+                                      fontFamily: 'JetBrains Mono, Consolas, monospace',
+                                      fontWeight: 600,
+                                      color: pctColor(customVsSharp),
+                                      background: `${pctColor(customVsSharp)}1a`,
+                                      border: `1px solid ${pctColor(customVsSharp)}40`,
+                                      borderRadius: 4,
+                                      padding: '1px 5px',
+                                    }}>
+                                      {formatPct(customVsSharp)} vs Sharp
+                                    </span>
+                                  )}
+                                  {customVsNoVig !== null && (
+                                    <span style={{
+                                      fontSize: 9,
+                                      fontFamily: 'JetBrains Mono, Consolas, monospace',
+                                      fontWeight: 600,
+                                      color: pctColor(customVsNoVig),
+                                      background: `${pctColor(customVsNoVig)}1a`,
+                                      border: `1px solid ${pctColor(customVsNoVig)}40`,
+                                      borderRadius: 4,
+                                      padding: '1px 5px',
+                                    }}>
+                                      {formatPct(customVsNoVig)} vs No-Vig
+                                    </span>
+                                  )}
+                                </div>
+                                <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 700, color: '#fbbf24' }}>
+                                  {customTotalOdds.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 8, color: '#94a3b8' }}>Return:</span>
+                              <span style={{ fontSize: 14, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 700, color: '#fbbf24' }}>
+                                €{customReturn.toFixed(2)}
+                              </span>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 8, color: '#94a3b8' }}>Return:</span>
-                            <span style={{
-                              fontSize: 14,
-                              fontFamily: 'JetBrains Mono, Consolas, monospace',
-                              fontWeight: 700,
-                              color: '#fbbf24',
-                            }}>
-                              €{customReturn.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Expand/Collapse indicator */}
                   <div
@@ -462,47 +467,66 @@ export default function BetslipHistory({ isOpen, onClose }) {
                             </div>
 
                             {/* Odds breakdown */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 6 }}>
-                              {bet.odds && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: 10, color: '#94a3b8' }}>Sharp Odds:</span>
-                                  <span style={{
-                                    fontSize: 12,
-                                    fontFamily: 'JetBrains Mono, Consolas, monospace',
-                                    fontWeight: 600,
-                                    color: '#60a5fa',
-                                  }}>
-                                    {bet.odds.toFixed(2)}
-                                  </span>
+                            {(() => {
+                              const sharpOdds = bet.odds || 0;
+                              const noVigOdds = bet.noVigOdds || 0;
+                              const customOdds = bet.customOdds && parseFloat(bet.customOdds) > 0 ? parseFloat(bet.customOdds) : 0;
+                              const noVigVsSharpPct = sharpOdds > 0 && noVigOdds > 0 ? ((noVigOdds - sharpOdds) / sharpOdds * 100) : null;
+                              const customVsSharpPct = sharpOdds > 0 && customOdds > 0 ? ((customOdds - sharpOdds) / sharpOdds * 100) : null;
+                              const customVsNoVigPct = noVigOdds > 0 && customOdds > 0 ? ((customOdds - noVigOdds) / noVigOdds * 100) : null;
+                              const fmtPct = (pct) => `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
+                              const pctClr = (pct) => pct >= 0 ? '#4ade80' : '#f87171';
+                              const pctBadge = (pct, label) => (
+                                <span style={{
+                                  fontSize: 8,
+                                  fontFamily: 'JetBrains Mono, Consolas, monospace',
+                                  fontWeight: 600,
+                                  color: pctClr(pct),
+                                  background: `${pctClr(pct)}1a`,
+                                  border: `1px solid ${pctClr(pct)}40`,
+                                  borderRadius: 3,
+                                  padding: '1px 4px',
+                                  marginLeft: 4,
+                                }}>
+                                  {fmtPct(pct)} vs {label}
+                                </span>
+                              );
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 6 }}>
+                                  {sharpOdds > 0 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontSize: 10, color: '#94a3b8' }}>Sharp Odds:</span>
+                                      <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 600, color: '#60a5fa' }}>
+                                        {sharpOdds.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {noVigOdds > 0 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontSize: 10, color: '#94a3b8' }}>No-Vig Odds:</span>
+                                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        {noVigVsSharpPct !== null && pctBadge(noVigVsSharpPct, 'Sharp')}
+                                        <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 600, color: '#a78bfa', marginLeft: 6 }}>
+                                          {noVigOdds.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {customOdds > 0 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontSize: 10, color: '#94a3b8' }}>Custom Odds:</span>
+                                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        {customVsSharpPct !== null && pctBadge(customVsSharpPct, 'Sharp')}
+                                        {customVsNoVigPct !== null && pctBadge(customVsNoVigPct, 'No-Vig')}
+                                        <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, Consolas, monospace', fontWeight: 700, color: '#fbbf24', marginLeft: 6 }}>
+                                          {customOdds.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                              {bet.noVigOdds && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: 10, color: '#94a3b8' }}>No-Vig Odds:</span>
-                                  <span style={{
-                                    fontSize: 12,
-                                    fontFamily: 'JetBrains Mono, Consolas, monospace',
-                                    fontWeight: 600,
-                                    color: '#a78bfa',
-                                  }}>
-                                    {bet.noVigOdds.toFixed(2)}
-                                  </span>
-                                </div>
-                              )}
-                              {bet.customOdds && parseFloat(bet.customOdds) > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: 10, color: '#94a3b8' }}>Custom Odds:</span>
-                                  <span style={{
-                                    fontSize: 12,
-                                    fontFamily: 'JetBrains Mono, Consolas, monospace',
-                                    fontWeight: 700,
-                                    color: '#fbbf24',
-                                  }}>
-                                    {parseFloat(bet.customOdds).toFixed(2)}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                              );
+                            })()}
 
                             <div
                               style={{
