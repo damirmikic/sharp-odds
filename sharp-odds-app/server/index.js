@@ -253,10 +253,15 @@ app.get('/api/odds/:sportKey/:eventId', async (req, res) => {
 // Uses `bookmakers=` param (cheaper than regions=) and includes bet limits.
 app.get('/api/league-odds/:sportKey', async (req, res) => {
   const { sportKey } = req.params;
+  const skipCache = req.query.refresh === 'true';
 
-  if (leagueOddsCache[sportKey] && (Date.now() - leagueOddsCache[sportKey].timestamp < LEAGUE_ODDS_CACHE_MS)) {
+  if (!skipCache && leagueOddsCache[sportKey] && (Date.now() - leagueOddsCache[sportKey].timestamp < LEAGUE_ODDS_CACHE_MS)) {
     console.log(`Serving league odds for ${sportKey} from cache.`);
     return res.json(leagueOddsCache[sportKey].data);
+  }
+
+  if (skipCache) {
+    console.log(`Cache bypass requested for league odds: ${sportKey}`);
   }
 
   try {
