@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from './hooks/useAuth';
 import { useBetslipSync } from './hooks/useBetslipSync';
@@ -1509,6 +1509,13 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
 
   const lastUpdateStr = formatLastUpdate(oddsData.lastUpdate);
 
+  const formatBetLimit = (limit) => {
+    if (!limit) return null;
+    if (limit >= 1000000) return `${(limit / 1000000).toFixed(1)}M`;
+    if (limit >= 1000) return `${Math.round(limit / 1000)}k`;
+    return String(limit);
+  };
+
   const getBestOdds = (type, marketKey) => {
     let best = -1;
     oddsData.bookmakers.forEach(bookie => {
@@ -1606,6 +1613,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
               <th style={{ width: 100 }}>X (Draw)</th>
               <th style={{ width: 100 }}>2 (Away)</th>
               <th style={{ width: 100 }}>Margin</th>
+              <th style={{ width: 90, fontSize: 9, color: 'var(--odds-yellow)' }}>Max Bet</th>
             </tr>
           </thead>
           <tbody>
@@ -1644,20 +1652,30 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       : '-'}
                   </span>
                 </td>
+                <td />
               </tr>
             )}
             {oddsData.bookmakers.map((bookie, i) => {
               const market = bookie.markets.find(m => m.key === 'h2h');
               if (!market) return null;
 
-              const getPrice = (name) => {
-                const outcome = market.outcomes.find(o => o.name === name);
-                return outcome ? outcome.price : null;
-              };
+              const getOutcome = (name) => market.outcomes.find(o => o.name === name);
 
-              const home = getPrice(oddsData.home_team);
-              const draw = getPrice('Draw');
-              const away = getPrice(oddsData.away_team);
+              const homeOutcome = getOutcome(oddsData.home_team);
+              const drawOutcome = getOutcome('Draw');
+              const awayOutcome = getOutcome(oddsData.away_team);
+
+              const home = homeOutcome?.price ?? null;
+              const draw = drawOutcome?.price ?? null;
+              const away = awayOutcome?.price ?? null;
+
+              const homeLimit = formatBetLimit(homeOutcome?.bet_limit);
+              const drawLimit = formatBetLimit(drawOutcome?.bet_limit);
+              const awayLimit = formatBetLimit(awayOutcome?.bet_limit);
+
+              // Show the lowest bet limit across outcomes as the binding limit
+              const rawLimits = [homeOutcome?.bet_limit, drawOutcome?.bet_limit, awayOutcome?.bet_limit].filter(Boolean);
+              const minLimit = rawLimits.length > 0 ? formatBetLimit(Math.min(...rawLimits)) : null;
 
               // Calculate margin
               let margin = null;
@@ -1705,6 +1723,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {home ? home.toFixed(3) : '-'}
+                      {homeLimit && <div style={{ fontSize: 8, color: 'var(--odds-yellow)', marginTop: 1, fontFamily: 'inherit' }}>{homeLimit}</div>}
                     </div>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
@@ -1736,6 +1755,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {draw ? draw.toFixed(3) : '-'}
+                      {drawLimit && <div style={{ fontSize: 8, color: 'var(--odds-yellow)', marginTop: 1, fontFamily: 'inherit' }}>{drawLimit}</div>}
                     </div>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
@@ -1767,6 +1787,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {away ? away.toFixed(3) : '-'}
+                      {awayLimit && <div style={{ fontSize: 8, color: 'var(--odds-yellow)', marginTop: 1, fontFamily: 'inherit' }}>{awayLimit}</div>}
                     </div>
                   </td>
                   <td style={{
@@ -1779,6 +1800,24 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                     <span className="font-mono-odds">
                       {margin !== null ? margin.toFixed(2) + '%' : '-'}
                     </span>
+                  </td>
+                  <td style={{ textAlign: 'center', padding: '5px 8px' }}>
+                    {minLimit ? (
+                      <span style={{
+                        fontSize: 10,
+                        fontFamily: 'JetBrains Mono, Consolas, monospace',
+                        fontWeight: 600,
+                        color: 'var(--odds-yellow)',
+                        background: 'rgba(251, 191, 36, 0.1)',
+                        border: '1px solid rgba(251, 191, 36, 0.25)',
+                        borderRadius: 3,
+                        padding: '1px 5px',
+                      }}>
+                        {minLimit}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>—</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -1794,6 +1833,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
               <th style={{ width: 100 }}>Over</th>
               <th style={{ width: 100 }}>Under</th>
               <th style={{ width: 100 }}>Margin</th>
+              <th style={{ width: 90, fontSize: 9, color: 'var(--odds-yellow)' }}>Max Bet</th>
             </tr>
           </thead>
           <tbody>
@@ -1832,6 +1872,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       : '-'}
                   </span>
                 </td>
+                <td />
               </tr>
             )}
             {oddsData.bookmakers.map((bookie, i) => {
@@ -1841,6 +1882,12 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
               const over = market.outcomes.find(o => o.name === 'Over');
               const under = market.outcomes.find(o => o.name === 'Under');
               const line = over?.point || under?.point || '-';
+
+              const overLimit = formatBetLimit(over?.bet_limit);
+              const underLimit = formatBetLimit(under?.bet_limit);
+
+              const rawLimits = [over?.bet_limit, under?.bet_limit].filter(Boolean);
+              const minTotalsLimit = rawLimits.length > 0 ? formatBetLimit(Math.min(...rawLimits)) : null;
 
               // Calculate margin for totals
               let margin = null;
@@ -1893,6 +1940,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {over ? over.price.toFixed(3) : '-'}
+                      {overLimit && <div style={{ fontSize: 8, color: 'var(--odds-yellow)', marginTop: 1, fontFamily: 'inherit' }}>{overLimit}</div>}
                     </div>
                   </td>
                   <td style={{ textAlign: 'center', padding: '5px 8px' }}>
@@ -1924,6 +1972,7 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {under ? under.price.toFixed(3) : '-'}
+                      {underLimit && <div style={{ fontSize: 8, color: 'var(--odds-yellow)', marginTop: 1, fontFamily: 'inherit' }}>{underLimit}</div>}
                     </div>
                   </td>
                   <td style={{
@@ -1936,6 +1985,24 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
                     <span className="font-mono-odds">
                       {margin !== null ? margin.toFixed(2) + '%' : '-'}
                     </span>
+                  </td>
+                  <td style={{ textAlign: 'center', padding: '5px 8px' }}>
+                    {minTotalsLimit ? (
+                      <span style={{
+                        fontSize: 10,
+                        fontFamily: 'JetBrains Mono, Consolas, monospace',
+                        fontWeight: 600,
+                        color: 'var(--odds-yellow)',
+                        background: 'rgba(251, 191, 36, 0.1)',
+                        border: '1px solid rgba(251, 191, 36, 0.25)',
+                        borderRadius: 3,
+                        padding: '1px 5px',
+                      }}>
+                        {minTotalsLimit}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>—</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -2077,9 +2144,15 @@ function App() {
   }, [selectedLeagues]);
 
 
-  // Fetch odds ONLY when user clicks a match (saves API quota)
+  // Track which leagues have already had their odds fetched (prevents duplicate calls)
+  const fetchedLeagueOddsRef = useRef(new Set());
+
+  // Fetch odds on match click — uses the league-level endpoint for cost efficiency:
+  // one API call loads ALL matches in the league instead of one call per match.
+  // After the first click on any match in a league, all other matches in that league
+  // show odds instantly (populated from the same single API call).
   const fetchOddsForMatch = useCallback(async (matchId) => {
-    if (leagueOdds[matchId] || loadingOdds.has(matchId)) return;
+    if (leagueOdds[matchId]) return; // Odds already loaded for this match
 
     // Find which league this match belongs to
     let leagueKey = null;
@@ -2092,13 +2165,20 @@ function App() {
     }
     if (!leagueKey) return;
 
+    // If this league is already being fetched or was already fetched, skip
+    if (fetchedLeagueOddsRef.current.has(leagueKey)) return;
+    fetchedLeagueOddsRef.current.add(leagueKey);
+
     setLoadingOdds(prev => new Set(prev).add(matchId));
     try {
-      const res = await axios.get(`${API_BASE_URL}/odds/${leagueKey}/${matchId}`);
-      setLeagueOdds(prev => ({ ...prev, [matchId]: res.data }));
+      // One call fetches ALL events' odds for the entire league
+      const res = await axios.get(`${API_BASE_URL}/league-odds/${leagueKey}`);
+      // res.data is { [eventId]: oddsData } — populates every match in the league at once
+      setLeagueOdds(prev => ({ ...prev, ...res.data }));
     } catch (err) {
-      console.error(`Failed to fetch odds for ${matchId}`, err);
+      console.error(`Failed to fetch league odds for ${leagueKey}`, err);
       setError('Failed to load odds. API quota may be exhausted.');
+      fetchedLeagueOddsRef.current.delete(leagueKey); // Allow retry on error
     } finally {
       setLoadingOdds(prev => {
         const next = new Set(prev);
@@ -2106,7 +2186,7 @@ function App() {
         return next;
       });
     }
-  }, [leagueOdds, loadingOdds, selectedLeagues, leagueMatches]);
+  }, [leagueOdds, selectedLeagues, leagueMatches]);
 
   // Get best odds for a match based on market type
   const getMatchBestOdds = useCallback((matchId, market = 'h2h') => {
