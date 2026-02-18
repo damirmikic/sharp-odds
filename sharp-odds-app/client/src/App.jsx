@@ -1632,7 +1632,7 @@ const MatchRow = ({ match, odds, bestOdds, isEven, favourites, onToggleFav, mark
 
 // ─── Expanded Odds Detail ─────────────────────────────────────────────────────
 
-const OddsDetail = ({ oddsData, onAddToBetslip }) => {
+const OddsDetail = ({ oddsData, onAddToBetslip, onRefresh, isRefreshing }) => {
   const [detailTab, setDetailTab] = useState('h2h');
 
   if (!oddsData || !oddsData.bookmakers || oddsData.bookmakers.length === 0) {
@@ -1728,6 +1728,37 @@ const OddsDetail = ({ oddsData, onAddToBetslip }) => {
           </span>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+          {onRefresh && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRefresh(); }}
+              disabled={isRefreshing}
+              title="Refresh odds (bypass cache)"
+              style={{
+                padding: '4px 8px',
+                fontSize: 10,
+                fontWeight: 600,
+                border: 'none',
+                borderRadius: 3,
+                background: 'var(--bg-primary)',
+                color: isRefreshing ? 'var(--text-muted)' : 'var(--odds-yellow)',
+                cursor: isRefreshing ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <svg
+                width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5"
+                style={{ animation: isRefreshing ? 'spin 1s linear infinite' : 'none' }}
+              >
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              {isRefreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+          )}
           {[
             { key: 'h2h', label: '1X2' },
             { key: 'totals', label: 'Goals' }
@@ -2301,8 +2332,8 @@ function App() {
   // one API call loads ALL matches in the league instead of one call per match.
   // After the first click on any match in a league, all other matches in that league
   // show odds instantly (populated from the same single API call).
-  const fetchOddsForMatch = useCallback(async (matchId) => {
-    if (leagueOdds[matchId]) return; // Odds already loaded for this match
+  const fetchOddsForMatch = useCallback(async (matchId, forceRefresh = false) => {
+    if (!forceRefresh && leagueOdds[matchId]) return; // Odds already loaded for this match
 
     // Find which league this match belongs to
     let leagueKey = null;
@@ -2315,14 +2346,20 @@ function App() {
     }
     if (!leagueKey) return;
 
-    // If this league is already being fetched or was already fetched, skip
-    if (fetchedLeagueOddsRef.current.has(leagueKey)) return;
+    // If this league is already being fetched or was already fetched, skip (unless forced)
+    if (!forceRefresh && fetchedLeagueOddsRef.current.has(leagueKey)) return;
+    if (forceRefresh) {
+      fetchedLeagueOddsRef.current.delete(leagueKey); // Clear so it can be re-fetched
+    }
     fetchedLeagueOddsRef.current.add(leagueKey);
 
     setLoadingOdds(prev => new Set(prev).add(matchId));
     try {
       // One call fetches ALL events' odds for the entire league
-      const res = await axios.get(`${API_BASE_URL}/league-odds/${leagueKey}`);
+      const url = forceRefresh
+        ? `${API_BASE_URL}/league-odds/${leagueKey}?refresh=true`
+        : `${API_BASE_URL}/league-odds/${leagueKey}`;
+      const res = await axios.get(url);
       // res.data is { [eventId]: oddsData } — populates every match in the league at once
       setLeagueOdds(prev => ({ ...prev, ...res.data }));
     } catch (err) {
@@ -2667,7 +2704,7 @@ function App() {
                     {expandedMatch === match.id && (
                       loadingOdds.has(match.id)
                         ? <div style={{ background: 'var(--bg-tertiary)', padding: '12px 16px', borderBottom: '2px solid var(--border-accent)', fontSize: 12, color: 'var(--odds-yellow)' }}>Loading odds...</div>
-                        : <OddsDetail oddsData={leagueOdds[match.id]} onAddToBetslip={handleAddToBetslip} />
+                        : <OddsDetail oddsData={leagueOdds[match.id]} onAddToBetslip={handleAddToBetslip} onRefresh={() => fetchOddsForMatch(match.id, true)} isRefreshing={loadingOdds.has(match.id)} />
                     )}
                   </div>
                 );
@@ -2721,7 +2758,7 @@ function App() {
                         {expandedMatch === match.id && (
                           loadingOdds.has(match.id)
                             ? <div style={{ background: 'var(--bg-tertiary)', padding: '12px 16px', borderBottom: '2px solid var(--border-accent)', fontSize: 12, color: 'var(--odds-yellow)' }}>Loading odds...</div>
-                            : <OddsDetail oddsData={leagueOdds[match.id]} onAddToBetslip={handleAddToBetslip} />
+                            : <OddsDetail oddsData={leagueOdds[match.id]} onAddToBetslip={handleAddToBetslip} onRefresh={() => fetchOddsForMatch(match.id, true)} isRefreshing={loadingOdds.has(match.id)} />
                         )}
                       </div>
                     );
