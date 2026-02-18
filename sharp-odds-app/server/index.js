@@ -71,6 +71,10 @@ const SHARP_BOOKMAKERS = [
   'kalshi'
 ];
 
+// Cost-efficient league-level bookmakers (used with bookmakers= param instead of regions=)
+// This avoids redundant region scans and fetches only the sharpest books in one call.
+const LEAGUE_BOOKMAKERS = 'pinnacle,smarkets,betfair_ex_uk,betonlineag,kalshi';
+
 // Simple in-memory cache for Odds: { eventId: { data: ..., timestamp: ... } }
 const oddsCache = {};
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes — save API quota
@@ -80,6 +84,10 @@ const sportsCache = { data: null, timestamp: 0 };
 const eventsCache = {}; // { sportKey: { data, timestamp } }
 const SPORTS_CACHE_MS = 30 * 60 * 1000; // 30 minutes
 const EVENTS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+
+// Cache for league-level odds (one call covers ALL events in a league)
+const leagueOddsCache = {}; // { sportKey: { data: {eventId: processedEvent}, timestamp } }
+const LEAGUE_ODDS_CACHE_MS = 5 * 60 * 1000; // 5 minutes
 
 // --- Routes ---
 
@@ -234,6 +242,102 @@ app.get('/api/odds/:sportKey/:eventId', async (req, res) => {
     };
 
     res.json(filteredData);
+
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+// 3b. Get All League Odds (Cost-Efficient)
+// One API call per league fetches ALL events' odds simultaneously, vs. one call per event click.
+// Uses `bookmakers=` param (cheaper than regions=) and includes bet limits.
+app.get('/api/league-odds/:sportKey', async (req, res) => {
+  const { sportKey } = req.params;
+
+  if (leagueOddsCache[sportKey] && (Date.now() - leagueOddsCache[sportKey].timestamp < LEAGUE_ODDS_CACHE_MS)) {
+    console.log(`Serving league odds for ${sportKey} from cache.`);
+    return res.json(leagueOddsCache[sportKey].data);
+  }
+
+  try {
+    const key = keyManager.getKey();
+    const response = await axios.get(`https://api.the-odds-api.com/v4/sports/${sportKey}/odds/`, {
+      params: {
+        apiKey: key,
+        bookmakers: LEAGUE_BOOKMAKERS,
+        markets: 'h2h,totals',
+        oddsFormat: 'decimal',
+        includeBetLimits: true
+      }
+    });
+
+    keyManager.reportStatus(key, response.status, response.headers);
+
+    const events = response.data; // Array of all events for this league
+    const lastUpdate = Date.now();
+    const eventMap = {};
+
+    events.forEach(event => {
+      // Calculate average h2h odds across bookmakers
+      const sharpH2h = event.bookmakers
+        .map(b => b.markets.find(m => m.key === 'h2h'))
+        .filter(Boolean);
+
+      let averageOdds = null;
+      if (sharpH2h.length > 0) {
+        const sums = { home: 0, draw: 0, away: 0 };
+        const counts = { home: 0, draw: 0, away: 0 };
+
+        sharpH2h.forEach(market => {
+          market.outcomes.forEach(o => {
+            if (o.name === event.home_team) { sums.home += o.price; counts.home++; }
+            else if (o.name === 'Draw') { sums.draw += o.price; counts.draw++; }
+            else if (o.name === event.away_team) { sums.away += o.price; counts.away++; }
+          });
+        });
+
+        averageOdds = {
+          home: counts.home > 0 ? +(sums.home / counts.home).toFixed(3) : null,
+          draw: counts.draw > 0 ? +(sums.draw / counts.draw).toFixed(3) : null,
+          away: counts.away > 0 ? +(sums.away / counts.away).toFixed(3) : null,
+          bookmakerCount: sharpH2h.length,
+        };
+      }
+
+      // Calculate average totals odds across bookmakers
+      const sharpTotals = event.bookmakers
+        .map(b => b.markets.find(m => m.key === 'totals'))
+        .filter(Boolean);
+
+      let averageTotals = null;
+      if (sharpTotals.length > 0) {
+        const sums = { over: 0, under: 0 };
+        const counts = { over: 0, under: 0 };
+
+        sharpTotals.forEach(market => {
+          market.outcomes.forEach(o => {
+            if (o.name === 'Over') { sums.over += o.price; counts.over++; }
+            else if (o.name === 'Under') { sums.under += o.price; counts.under++; }
+          });
+        });
+
+        averageTotals = {
+          over: counts.over > 0 ? +(sums.over / counts.over).toFixed(3) : null,
+          under: counts.under > 0 ? +(sums.under / counts.under).toFixed(3) : null,
+          bookmakerCount: sharpTotals.length,
+        };
+      }
+
+      eventMap[event.id] = {
+        ...event,
+        averageOdds,
+        averageTotals,
+        lastUpdate,
+      };
+    });
+
+    leagueOddsCache[sportKey] = { data: eventMap, timestamp: lastUpdate };
+    res.json(eventMap);
 
   } catch (error) {
     handleError(error, res);
