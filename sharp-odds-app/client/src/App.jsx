@@ -171,6 +171,8 @@ const BetslipItem = ({ item, onRemove, onUpdateCustomOdds }) => {
 
 const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = { x: 20, y: 70 }, onDragStart, onUpdateCustomOdds, stake = 10, onStakeChange, onSaveBetslipToHistory }) => {
   const [activeTab, setActiveTab] = useState('selections');
+  const [bookiBonus, setBookiBonus] = useState('');
+  const [bonusMode, setBonusMode] = useState('pct'); // 'pct' or 'odds'
 
   if (!isOpen) return null;
 
@@ -200,6 +202,19 @@ const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = 
   // Calculate percentage differences
   const diffVsBest = bestTotalOdds > 0 ? ((customTotalOdds - bestTotalOdds) / bestTotalOdds * 100) : 0;
   const diffVsNoVig = noVigTotalOdds > 0 ? ((customTotalOdds - noVigTotalOdds) / noVigTotalOdds * 100) : 0;
+
+  // Calculate bookie bonus multiplier
+  const bonusMultiplier = (() => {
+    const val = parseFloat(bookiBonus);
+    if (!bookiBonus || isNaN(val) || val <= 0) return 1;
+    if (bonusMode === 'odds') {
+      return val >= 1 ? val : 1;
+    } else {
+      return 1 + val / 100;
+    }
+  })();
+  const boostedTotalOdds = customTotalOdds * bonusMultiplier;
+  const hasBonusApplied = bonusMultiplier > 1.0001;
 
   // Save betslip as CSV
   const handleSaveBetslipCSV = () => {
@@ -681,6 +696,95 @@ const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = 
             />
           </div>
 
+          {/* Bookie Bonus Input */}
+          <div style={{
+            marginBottom: 10,
+            padding: '10px 12px',
+            background: 'rgba(249, 115, 22, 0.08)',
+            borderRadius: 6,
+            border: '2px solid rgba(249, 115, 22, 0.3)',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 6,
+            }}>
+              <div style={{
+                fontSize: 9,
+                color: '#fb923c',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>
+                🎁 Bookie Bonus{hasBonusApplied ? ` (+${((bonusMultiplier - 1) * 100).toFixed(1)}%)` : ''}
+              </div>
+              {/* Mode toggle: % | Odds */}
+              <div style={{
+                display: 'flex',
+                borderRadius: 4,
+                overflow: 'hidden',
+                border: '1px solid rgba(249, 115, 22, 0.4)',
+              }}>
+                <button
+                  onClick={() => setBonusMode('pct')}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    border: 'none',
+                    background: bonusMode === 'pct' ? 'rgba(249, 115, 22, 0.45)' : 'transparent',
+                    color: bonusMode === 'pct' ? '#fb923c' : '#94a3b8',
+                    cursor: 'pointer',
+                  }}
+                >%</button>
+                <button
+                  onClick={() => setBonusMode('odds')}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    border: 'none',
+                    borderLeft: '1px solid rgba(249, 115, 22, 0.4)',
+                    background: bonusMode === 'odds' ? 'rgba(249, 115, 22, 0.45)' : 'transparent',
+                    color: bonusMode === 'odds' ? '#fb923c' : '#94a3b8',
+                    cursor: 'pointer',
+                  }}
+                >Odds</button>
+              </div>
+            </div>
+            <input
+              type="number"
+              step={bonusMode === 'pct' ? '1' : '0.01'}
+              min="0"
+              placeholder={bonusMode === 'pct' ? 'e.g. 15  (= 15% bonus)' : 'e.g. 1.15  (= 15% bonus)'}
+              value={bookiBonus}
+              onChange={(e) => setBookiBonus(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                fontSize: 14,
+                fontFamily: 'JetBrains Mono, Consolas, monospace',
+                fontWeight: 700,
+                color: '#fb923c',
+                background: 'rgba(249, 115, 22, 0.05)',
+                border: '2px solid rgba(249, 115, 22, 0.4)',
+                borderRadius: 6,
+                outline: 'none',
+                textAlign: 'center',
+                transition: 'all 0.15s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.7)';
+                e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.4)';
+                e.currentTarget.style.background = 'rgba(249, 115, 22, 0.05)';
+              }}
+            />
+          </div>
+
           {/* Bet type header */}
           <div style={{
             fontSize: 11,
@@ -822,6 +926,52 @@ const BetslipPanel = ({ betslip, isOpen, onRemove, onClear, onClose, position = 
               </div>
             </div>
           </div>
+
+          {/* Boosted Total (with bookie bonus) */}
+          {hasBonusApplied && (
+            <div style={{
+              padding: '10px 12px',
+              background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.18) 0%, rgba(234, 88, 12, 0.12) 100%)',
+              borderRadius: 6,
+              border: '2px solid rgba(249, 115, 22, 0.5)',
+              boxShadow: '0 4px 12px rgba(249, 115, 22, 0.2)',
+              marginTop: 8,
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <div>
+                  <div style={{
+                    fontSize: 9,
+                    color: '#fb923c',
+                    fontWeight: 600,
+                    marginBottom: 2,
+                  }}>
+                    🎁 BOOSTED TOTAL (+{((bonusMultiplier - 1) * 100).toFixed(1)}% BONUS)
+                  </div>
+                  <div style={{
+                    fontSize: 10,
+                    color: '#94a3b8',
+                    fontWeight: 500,
+                  }}>
+                    Stake €{stake} → <span style={{ color: '#fb923c', fontWeight: 700 }}>€{(boostedTotalOdds * stake).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: 20,
+                  fontFamily: 'JetBrains Mono, Consolas, monospace',
+                  fontWeight: 700,
+                  color: '#fb923c',
+                  letterSpacing: '-0.5px',
+                  textShadow: '0 2px 12px rgba(249, 115, 22, 0.4)',
+                }}>
+                  {boostedTotalOdds.toFixed(2)}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Percentage Difference Indicators */}
           <div style={{
