@@ -73,7 +73,7 @@ const SHARP_BOOKMAKERS = [
 
 // Cost-efficient league-level bookmakers (used with bookmakers= param instead of regions=)
 // This avoids redundant region scans and fetches only the sharpest books in one call.
-const LEAGUE_BOOKMAKERS = 'pinnacle,smarkets,betfair_ex_uk,betonlineag,kalshi';
+const LEAGUE_BOOKMAKERS = 'pinnacle,smarkets,betfair_ex_uk,betonlineag,kalshi,matchbook,lowvig,polymarket';
 
 // Simple in-memory cache for Odds: { eventId: { data: ..., timestamp: ... } }
 const oddsCache = {};
