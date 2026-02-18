@@ -2577,10 +2577,11 @@ function App() {
     try {
       await supabaseAPI.saveBetslipHistory(user.id, historyData);
       alert('✓ Betslip saved to history!');
+      handleClearBetslip();
     } catch (err) {
       alert('✗ Failed to save: ' + err.message);
     }
-  }, [betslip, stake, user]);
+  }, [betslip, stake, user, handleClearBetslip]);
 
   const handleToggleBetslip = useCallback(() => {
     setBetslipOpen(prev => !prev);
