@@ -1326,7 +1326,7 @@ const LeagueRow = ({ league, isOpen, onToggle, matchCount }) => (
   >
     <ChevronIcon open={isOpen} />
     <FlagEmoji league={league} />
-    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-bright)' }}>
+    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-league)' }}>
       {league.title}
     </span>
     <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 'auto' }}>
