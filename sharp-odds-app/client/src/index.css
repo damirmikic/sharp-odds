@@ -205,7 +205,7 @@ body {
   cursor: pointer;
   transition: all 0.12s ease;
   border-left: 2px solid transparent;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 .sidebar-league:hover {
   background-color: var(--bg-hover);
